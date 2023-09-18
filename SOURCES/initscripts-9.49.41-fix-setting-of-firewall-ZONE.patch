@@ -1,0 +1,70 @@
+From d951e7c7d64c0378424b8b2edd406ae9eaa73ec1 Mon Sep 17 00:00:00 2001
+From: "David Kaspar [Dee'Kej]" <dkaspar@redhat.com>
+Date: Wed, 6 Jun 2018 19:19:11 +0200
+Subject: [PATCH] network-scripts: setting of firewall ZONE fixed
+
+  For currently unknown reason the dbus-send calls will fail to set the
+  firewall zone for the given interface if we omit the --print-reply
+  option...
+
+  This looks like some kind of race-condition in dbus-send, since the
+  --print-reply makes the call synchronous and slower.
+
+  Hopefully this is only a temporary workaround until DBus is fixed.
+
+  Resolves: #1586284
+---
+ sysconfig/network-scripts/ifdown-post | 4 ++--
+ sysconfig/network-scripts/ifup-eth    | 3 ++-
+ sysconfig/network-scripts/ifup-post   | 4 ++--
+ 3 files changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/sysconfig/network-scripts/ifdown-post b/sysconfig/network-scripts/ifdown-post
+index 9db16ad3..48a57ae4 100755
+--- a/sysconfig/network-scripts/ifdown-post
++++ b/sysconfig/network-scripts/ifdown-post
+@@ -53,9 +53,9 @@ if ! check_default_route ; then
+     fi
+ fi
+ 
+-# Reset firewall ZONE to "default":
++# Reset firewall zone (empty ZONE means default):
+ if [ "${REALDEVICE}" != "lo" ]; then
+-    dbus-send --system --dest=org.fedoraproject.FirewallD1 \
++    dbus-send --print-reply --system --dest=org.fedoraproject.FirewallD1 \
+               /org/fedoraproject/FirewallD1 \
+               org.fedoraproject.FirewallD1.zone.removeInterface \
+               string: "" string:"${DEVICE}" \
+diff --git a/sysconfig/network-scripts/ifup-eth b/sysconfig/network-scripts/ifup-eth
+index bee5c4f0..ab59244a 100755
+--- a/sysconfig/network-scripts/ifup-eth
++++ b/sysconfig/network-scripts/ifup-eth
+@@ -339,7 +339,8 @@ fi
+ /etc/sysconfig/network-scripts/ifup-ipv6 ${CONFIG}
+ if is_true "${DHCPV6C}" && [ -x /sbin/dhclient ]; then
+ 
+-    # Assign interface into a firewalld zone so we can obtain the IPv6 via DHCPv6:
++    # Assign interface into a firewalld zone so we can
++    # obtain the IPv6 via DHCPv6 (empty ZONE means default):
+     if [ "${REALDEVICE}" != "lo" ]; then
+         dbus-send --print-reply --system --dest=org.fedoraproject.FirewallD1 \
+                   /org/fedoraproject/FirewallD1 \
+diff --git a/sysconfig/network-scripts/ifup-post b/sysconfig/network-scripts/ifup-post
+index c9d91700..c002503f 100755
+--- a/sysconfig/network-scripts/ifup-post
++++ b/sysconfig/network-scripts/ifup-post
+@@ -132,9 +132,9 @@ if [ "$2" = "boot" -a \
+     fi
+ fi
+ 
+-# Set firewall ZONE for this device (empty means default):
++# Set firewall ZONE for this device (empty ZONE means default):
+ if [ "${REALDEVICE}" != "lo" ]; then
+-    dbus-send --system --dest=org.fedoraproject.FirewallD1 \
++    dbus-send --print-reply --system --dest=org.fedoraproject.FirewallD1 \
+               /org/fedoraproject/FirewallD1 \
+               org.fedoraproject.FirewallD1.zone.changeZoneOfInterface \
+               string:"${ZONE}" string:"${DEVICE}" \
+-- 
+2.14.4
+

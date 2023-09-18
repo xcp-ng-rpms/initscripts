@@ -1,0 +1,32 @@
+From d7e9663a063e087cd9c77844f56d1c17e7a19402 Mon Sep 17 00:00:00 2001
+From: "David Kaspar [Dee'Kej]" <dkaspar@redhat.com>
+Date: Mon, 20 Aug 2018 14:31:56 +0200
+Subject: [PATCH] ifup-post: fix incorrect condition for RESOLV_MODS
+
+  This was causing the /etc/resolv.conf file to be always updated when
+  RESOLV_MODS was not set...
+
+  Before the commit 5d6156454bf8f6dab4a5fdd7e1bf6 we were not updating
+  the /etc/resolv.conf file if the RESOLV_MODS was empty.
+
+  See https://bugzilla.redhat.com/show_bug.cgi?id=1610411 for more info.
+---
+ sysconfig/network-scripts/ifup-post | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sysconfig/network-scripts/ifup-post b/sysconfig/network-scripts/ifup-post
+index c002503f..7bf81f2b 100755
+--- a/sysconfig/network-scripts/ifup-post
++++ b/sysconfig/network-scripts/ifup-post
+@@ -28,7 +28,7 @@ if ! is_true "$NOROUTESET"; then
+ fi
+ 
+ 
+-if ! is_false "${PEERDNS}" || ! is_false "${RESOLV_MODS}"; then
++if ! is_false "${PEERDNS}" || is_true "${RESOLV_MODS}"; then
+     # Obtain the DNS entries when using PPP if necessary:
+     [ -n "${MS_DNS1}" ] && DNS1="${MS_DNS1}"
+     [ -n "${MS_DNS2}" ] && DNS2="${MS_DNS2}"
+-- 
+2.14.4
+
