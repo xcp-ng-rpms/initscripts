@@ -42,6 +42,7 @@ Requires(preun): /sbin/chkconfig
 BuildRequires: glib2-devel popt-devel gettext pkgconfig systemd
 Provides: /sbin/service
 
+BuildRequires: gcc
 
 %description
 The initscripts package contains basic system scripts used
