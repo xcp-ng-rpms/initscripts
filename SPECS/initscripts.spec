@@ -9,7 +9,7 @@ Version: 9.49.41
 # ppp-watch is GPLv2+, everything else is GPLv2
 License: GPLv2 and GPLv2+
 Group: System Environment/Base
-Release: %{?xsrel}%{?dist}
+Release: %{?xsrel}.1%{?dist}
 URL: https://github.com/fedora-sysv/initscripts
 Source0: initscripts-9.49.41.tar.gz
 Patch0: initscripts-9.49.41-fix-setting-of-firewall-ZONE.patch
@@ -32,7 +32,8 @@ Requires: system-release
 Requires: udev >= 125-1
 Requires: cpio
 Requires: hostname
-Requires: setup >= 2.8.72
+# XCP-ng: don't require XS' fork of the setup RPM
+#Requires: setup >= 2.8.72
 Conflicts: ipsec-tools < 0.8.0-2
 Conflicts: NetworkManager < 0.9.9.0-37.git20140131.el7
 Requires(pre): /usr/sbin/groupadd
@@ -82,6 +83,10 @@ rm -f \
 
 touch $RPM_BUILD_ROOT/etc/crypttab
 chmod 600 $RPM_BUILD_ROOT/etc/crypttab
+
+# XCP-ng: don't rely on XS' fork of the setup RPM to do that
+%pre
+/usr/sbin/groupadd -g 22 -r -f utmp
 
 %post
 %systemd_post brandbot.path rhel-autorelabel.service rhel-autorelabel-mark.service rhel-configure.service rhel-dmesg.service rhel-domainname.service rhel-import-state.service rhel-loadmodules.service rhel-readonly.service
@@ -222,6 +227,10 @@ fi
 /etc/profile.d/debug*
 
 %changelog
+* Fri Oct 20 2023 Yann Dirson <yann.dirson@vates.tech> - 9.49.41-2.1
+- Reinstate creation of utmp group, and remove dependency on XS' fork
+  of the setup RPM where it has been transfered for them.
+
 * Mon Mar 13 2023 Tim Smith <tim.smith@citrix.com> - 9.49.41-2
 - Prevent complaints about library paths in initscripts
 
